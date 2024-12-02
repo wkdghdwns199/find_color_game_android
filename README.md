@@ -1,1 +1,1 @@
-# find_color_game_android
+# 다른 색깔 찾기 게임 안드로이드 버전
