@@ -1,34 +1,43 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:gravity="center"
     android:padding="16dp">
 
-    <!-- 타이머와 스테이지 -->
+    <!-- 타이머 텍스트 -->
     <TextView
-        android:id="@+id/timerText"
+        android:id="@+id/timerTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="남은 시간: 15초"
-        android:textSize="20sp"
-        android:layout_marginBottom="8dp" />
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:text="15"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="#000000" />
 
+    <!-- 스테이지 텍스트 -->
     <TextView
-        android:id="@+id/stageText"
+        android:id="@+id/stageTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="스테이지: 1"
-        android:textSize="20sp"
-        android:layout_marginBottom="10dp" />
+        android:layout_below="@id/timerTextView"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="8dp"
+        android:text="Stage: 1"
+        android:textSize="18sp"
+        android:textColor="#000000" />
 
-    <!-- 그리드 레이아웃 -->
+    <!-- 타일들을 담는 GridLayout -->
     <GridLayout
-        android:id="@+id/gridLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:padding="8dp" />
+        android:id="@+id/tileGrid"
+        android:layout_width="480dp"
+    android:layout_height="450dp"
+    android:layout_centerInParent="true"
+    android:padding="4dp"
+    android:columnCount="4"
+    android:rowCount="4"
+    android:background="#E0E0E0"
+    android:useDefaultMargins="true">
+</GridLayout>
 
-</LinearLayout>
+    </RelativeLayout>

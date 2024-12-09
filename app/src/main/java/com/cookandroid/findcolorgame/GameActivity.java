@@ -1,164 +1,184 @@
 package com.cookandroid.findcolorgame;
 
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.Handler;
-import android.util.DisplayMetrics;
 import android.view.View;
 import android.widget.GridLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
+
 import java.util.Random;
 
 public class GameActivity extends AppCompatActivity {
-    private int gridSize = 2; // 초기 그리드 크기 (2x2)
-    private int stage = 1;   // 초기 스테이지
-    private TextView stageText, timerText;
-    private GridLayout gridLayout;
-    private boolean isClickable = true; // 클릭 가능 상태
-    private Handler timerHandler = new Handler();
-    private int correctPosition; // 정답 위치 저장
-    private int timeRemaining = 15; // 15초 제한
+
+    private static final int INITIAL_GRID_SIZE = 4;
+    private static final long TIME_LIMIT = 15000; // 15 seconds
+    private static final int TILE_SPACING = 8; // Spacing between tiles
+
+    private GridLayout tileGrid;
+    private TextView timerTextView, stageTextView;
+
+    private int currentStage = 1;
+    private int gridSize = INITIAL_GRID_SIZE;
+
+    private CountDownTimer timer;
+    private int differentTileIndex; // 정답 타일 인덱스 저장
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game);
 
-        stageText = findViewById(R.id.stageText);
-        timerText = findViewById(R.id.timerText);
-        gridLayout = findViewById(R.id.gridLayout);
+        tileGrid = findViewById(R.id.tileGrid);
+        timerTextView = findViewById(R.id.timerTextView);
+        stageTextView = findViewById(R.id.stageTextView);
 
-        updateStage(); // 초기화 후 스테이지 설정
+        tileGrid.post(() -> startGame()); // Ensure layout is measured before starting
     }
 
-    private void updateStage() {
-        stageText.setText("스테이지: " + stage);
-
-        // 스테이지에 따라 그리드 크기 증가
-        gridSize = 2 + (stage - 1); // 2x2 → 3x3 → 4x4 ...
-
-        timeRemaining = 15; // 타이머 초기화
-        updateTimerUI();
-        generateGrid();
-        startTimer();
+    private void startGame() {
+        stageTextView.setText("Stage: " + currentStage);
+        setupGrid();
+        resetTimer();
     }
 
-    private void generateGrid() {
-        gridLayout.removeAllViews();
-        gridLayout.setColumnCount(gridSize);
-        gridLayout.setRowCount(gridSize);
+    private void setupGrid() {
+        tileGrid.removeAllViews();
+        tileGrid.setColumnCount(gridSize);
+        tileGrid.setRowCount(gridSize);
 
-        correctPosition = new Random().nextInt(gridSize * gridSize);
-        int baseColor = Color.rgb(new Random().nextInt(200), new Random().nextInt(200), new Random().nextInt(200));
-        int diffColor = adjustColorContrast(baseColor, 80);
+        // Calculate the available width and height for tiles
+        int availableWidth = tileGrid.getWidth() - TILE_SPACING * (gridSize + 1);
+        int availableHeight = tileGrid.getHeight() - TILE_SPACING * (gridSize + 1);
 
-        // 디바이스 너비 기준으로 GridLayout 크기 설정
-        DisplayMetrics metrics = getResources().getDisplayMetrics();
-        int deviceWidth = metrics.widthPixels;
+        // Calculate the size of each tile to ensure they are square and fit within the layout
+        int tileSize = Math.min(availableWidth, availableHeight) / gridSize;
 
-        // GridLayout 크기 (디바이스 너비의 90%)
-        int gridLayoutSize = (int) (deviceWidth * 0.9);
-        gridLayout.getLayoutParams().width = gridLayoutSize;
-        gridLayout.getLayoutParams().height = gridLayoutSize;
-        gridLayout.requestLayout();
+        if (tileSize <= 0) {
+            gridSize--; // Reduce grid size if tiles exceed layout bounds
+            startGame();
+            return;
+        }
 
-        // 여백과 타일 크기 계산
-        int margin = 8; // 타일 간 여백
-        int totalMargin = margin * (gridSize + 1); // 총 여백
-        int tileSize = (gridLayoutSize -  totalMargin) / gridSize;
+        int totalTiles = gridSize * gridSize;
+        Random random = new Random();
 
-        // 디버깅 로그
-        System.out.println("GridLayout Size: " + gridLayoutSize);
-        System.out.println("Tile Size: " + tileSize);
-        System.out.println("Total Margin: " + totalMargin);
+        // Ensure the correct tile is not assigned to an overflowing position
+        do {
+            differentTileIndex = random.nextInt(totalTiles);
+        } while (isTileOverflowing(differentTileIndex, tileSize));
 
-        // 타일 추가
-        for (int i = 0; i < gridSize * gridSize; i++) {
-            final int position = i;
-            View view = new View(this);
-            view.setBackgroundColor(i == correctPosition ? diffColor : baseColor);
+        int baseColor = generateRandomColor();
+        int differentColor = darkenColor(baseColor);
 
-            // 클릭 이벤트
-            view.setOnClickListener(v -> {
-                if (!isClickable) return; // 클릭 비활성화 상태면 무시
-                if (position == correctPosition) {
-                    stage++;
-                    updateStage();
-                } else {
-                    Toast.makeText(this, "다시 시도하세요!", Toast.LENGTH_SHORT).show();
-                }
-            });
-
-            // 타일 레이아웃 설정
+        for (int i = 0; i < totalTiles; i++) {
+            View tile = new View(this);
             GridLayout.LayoutParams params = new GridLayout.LayoutParams();
             params.width = tileSize;
             params.height = tileSize;
-            params.setMargins(margin, margin, margin, margin);
-            view.setLayoutParams(params);
+            params.setMargins(TILE_SPACING / 2, TILE_SPACING / 2, TILE_SPACING / 2, TILE_SPACING / 2);
+            tile.setLayoutParams(params);
 
-            gridLayout.addView(view);
-        }
-    }
-
-
-
-    private void startTimer() {
-        isClickable = true;
-        timerHandler.removeCallbacksAndMessages(null); // 이전 타이머 초기화
-
-        timerHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                if (timeRemaining > 0) {
-                    timeRemaining--;
-                    updateTimerUI();
-                    timerHandler.postDelayed(this, 1000); // 1초 간격
-                } else {
-                    isClickable = false;
-                    showAnswer();
-                }
-            }
-        }, 1000);
-    }
-
-    private void updateTimerUI() {
-        timerText.setText("남은 시간: " + timeRemaining + "초");
-    }
-
-    private void showAnswer() {
-        for (int i = 0; i < gridLayout.getChildCount(); i++) {
-            View child = gridLayout.getChildAt(i);
-            if (i == correctPosition) {
-                child.setBackgroundColor(Color.GREEN); // 정답 강조
+            if (i == differentTileIndex) {
+                tile.setBackgroundColor(differentColor); // Different color tile
+                tile.setOnClickListener(v -> {
+                    timer.cancel();
+                    onCorrectTileClicked();
+                });
             } else {
-                child.setBackgroundColor(Color.GRAY); // 다른 타일 흐리게
+                tile.setBackgroundColor(baseColor); // Normal tile
+                tile.setOnClickListener(v -> Toast.makeText(this, "Try again!", Toast.LENGTH_SHORT).show());
+            }
+            tileGrid.addView(tile);
+        }
+    }
+
+    private boolean isTileOverflowing(int tileIndex, int tileSize) {
+        int row = tileIndex / gridSize;
+        int col = tileIndex % gridSize;
+
+        // Calculate the position of the tile
+        int leftEdge = col * (tileSize + TILE_SPACING);
+        int topEdge = row * (tileSize + TILE_SPACING);
+        int rightEdge = leftEdge + tileSize;
+        int bottomEdge = topEdge + tileSize;
+
+        // Check if the tile exceeds the layout bounds
+        return rightEdge > tileGrid.getWidth() || bottomEdge > tileGrid.getHeight();
+    }
+
+    private void resetTimer() {
+        if (timer != null) {
+            timer.cancel();
+        }
+        timer = new CountDownTimer(TIME_LIMIT, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                timerTextView.setText(String.valueOf(millisUntilFinished / 1000));
+            }
+
+            @Override
+            public void onFinish() {
+                onTimeUp();
+            }
+        }.start();
+    }
+
+    private void onCorrectTileClicked() {
+        currentStage++;
+        gridSize++;
+        startGame();
+    }
+
+    private void onTimeUp() {
+        for (int i = 0; i < tileGrid.getChildCount(); i++) {
+            View tile = tileGrid.getChildAt(i);
+            if (i == differentTileIndex) {
+                tile.setBackgroundColor(Color.GREEN); // Highlight the correct tile
+            } else {
+                tile.setBackgroundColor(Color.GRAY); // Dim all other tiles
             }
         }
 
-        // 3초 후 팝업창 표시
-        timerHandler.postDelayed(this::showPopup, 3000);
+        new Handler().postDelayed(this::showRetryDialog, 3000); // Delay for 3 seconds before showing dialog
     }
 
-    private void showPopup() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("게임 종료");
-        builder.setMessage("다른 색깔을 찾지 못했습니다.");
-        builder.setPositiveButton("다시하기", (dialog, which) -> {
-            stage = 1; // 초기화
-            updateStage();
-        });
-        builder.setNegativeButton("종료", (dialog, which) -> finish());
-        builder.setCancelable(false);
-        builder.show();
+    private void showRetryDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("게임 종료")
+                .setMessage("다시 하겠습니까?")
+                .setPositiveButton("다시 하기", (dialog, which) -> {
+                    currentStage = 1;
+                    gridSize = INITIAL_GRID_SIZE;
+                    startGame();
+                })
+                .setNegativeButton("종료", (dialog, which) -> {
+                    Intent intent = new Intent(GameActivity.this, MainActivity.class);
+                    startActivity(intent);
+                    finish();
+                })
+                .setCancelable(false)
+                .show();
     }
 
-    private int adjustColorContrast(int color, int contrast) {
-        int r = Math.max(0, Math.min(255, Color.red(color) + contrast));
-        int g = Math.max(0, Math.min(255, Color.green(color) - contrast));
-        int b = Math.max(0, Math.min(255, Color.blue(color) + contrast));
-        return Color.rgb(r, g, b);
+    private int generateRandomColor() {
+        Random random = new Random();
+        int red = random.nextInt(156) + 100; // Bright colors
+        int green = random.nextInt(156) + 100;
+        int blue = random.nextInt(156) + 100;
+        return Color.rgb(red, green, blue);
+    }
+
+    private int darkenColor(int color) {
+        int red = (int) (Color.red(color) * 0.8); // 20% darker
+        int green = (int) (Color.green(color) * 0.8);
+        int blue = (int) (Color.blue(color) * 0.8);
+        return Color.rgb(red, green, blue);
     }
 }
