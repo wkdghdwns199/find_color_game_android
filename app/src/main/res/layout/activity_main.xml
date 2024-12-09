@@ -22,4 +22,9 @@
         android:layout_height="wrap_content"
         android:text="게임 시작" />
 
+    <Button
+        android:id="@+id/rankButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="랭킹" />
 </LinearLayout>
