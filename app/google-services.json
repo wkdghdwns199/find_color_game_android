@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "968137958639",
+    "firebase_url": "https://findcolorgame-1f2d5-default-rtdb.firebaseio.com",
+    "project_id": "findcolorgame-1f2d5",
+    "storage_bucket": "findcolorgame-1f2d5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:968137958639:android:16e4ae7a9e29c7ad63671a",
+        "android_client_info": {
+          "package_name": "com.cookandroid.findcolorgame"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "968137958639-jvbrao2kutvat93aui0tpc272hh207pi.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.cookandroid.findcolorgame",
+            "certificate_hash": "a194ebf9d4372541134ed840fb44277e75ae28ec"
+          }
+        },
+        {
+          "client_id": "968137958639-7790tvdnnph22hhe07oknmdoabqr1j83.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCmpPpzY6LMTCcsxjpQWSB8_ERuSA6lGgY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "968137958639-7790tvdnnph22hhe07oknmdoabqr1j83.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
