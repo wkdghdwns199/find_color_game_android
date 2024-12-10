@@ -14,8 +14,6 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.firestore.auth.User;
 
 import java.util.Random;
 
@@ -163,9 +161,6 @@ public class GameActivity extends AppCompatActivity {
                     startGame();
                 })
                 .setNegativeButton("종료", (dialog, which) -> {
-                    DatabaseReference database = FirebaseDatabase.getInstance().getReference("leaderboard");
-                    String userId = "user1";
-                    database.child(userId).setValue(new User("Alice", 1500));
                     Intent intent = new Intent(GameActivity.this, MainActivity.class);
                     startActivity(intent);
                     finish();
