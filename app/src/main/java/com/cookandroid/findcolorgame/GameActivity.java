@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
+import android.util.Log;
 import android.view.View;
 import android.widget.GridLayout;
 import android.widget.TextView;
@@ -13,8 +14,14 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 public class GameActivity extends AppCompatActivity {
@@ -32,6 +39,11 @@ public class GameActivity extends AppCompatActivity {
     private CountDownTimer timer;
     private int differentTileIndex; // 정답 타일 인덱스 저장
 
+    // Fire Base에서 사용자 정보를 가져옴
+    private FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+    // 파이어 베이스 저장소
+    private FirebaseFirestore db = FirebaseFirestore.getInstance();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,7 +53,14 @@ public class GameActivity extends AppCompatActivity {
         timerTextView = findViewById(R.id.timerTextView);
         stageTextView = findViewById(R.id.stageTextView);
 
+        if (user != null) {
+            String uid = user.getUid(); // 고유 사용자 ID
+            String email = user.getEmail(); // 사용자 이메일
+            String displayName = user.getDisplayName(); // 사용자 표시 이름
+        }
+
         tileGrid.post(() -> startGame()); // Ensure layout is measured before starting
+
     }
 
     private void startGame() {
@@ -161,6 +180,24 @@ public class GameActivity extends AppCompatActivity {
                     startGame();
                 })
                 .setNegativeButton("종료", (dialog, which) -> {
+                    if (user != null) {
+                        String uid = user.getUid();
+                        int userScore = 100; // 예시로 사용자의 점수를 100점이라 가정
+
+                        Map<String, Object> data = new HashMap<>();
+                        data.put("score", userScore);
+                        data.put("email", user.getEmail());
+                        data.put("name", user.getDisplayName());
+
+                        db.collection("users").document(uid)
+                                .set(data, SetOptions.merge()) // merge() 사용 시 기존 데이터에 갱신
+                                .addOnSuccessListener(aVoid -> {
+                                    Log.d("Firestore", "Score successfully written!");
+                                })
+                                .addOnFailureListener(e -> {
+                                    Log.w("Firestore", "Error writing score", e);
+                                });
+                    }
                     Intent intent = new Intent(GameActivity.this, MainActivity.class);
                     startActivity(intent);
                     finish();

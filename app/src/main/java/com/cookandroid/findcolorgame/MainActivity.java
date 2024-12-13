@@ -1,5 +1,6 @@
 package com.cookandroid.findcolorgame;
 
+import com.google.android.gms.games.Games;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -57,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
         GoogleSignInOptions googleSignInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
+                .requestScopes(Games.SCOPE_GAMES_LITE) // Games.SCOPE_GAMES_LITE 추가
                 .build();
 
         mGoogleSignInClient = GoogleSignIn.getClient(this, googleSignInOptions);
@@ -94,6 +96,16 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+    }
+
+    private void showLeaderboard() {
+        Games.getLeaderboardsClient(this, GoogleSignIn.getLastSignedInAccount(this))
+                .getLeaderboardIntent(getString(R.string.leaderboard_id))
+                .addOnSuccessListener(intent -> startActivityForResult(intent, 0))
+                .addOnFailureListener(e -> {
+                    Log.w(TAG, "Leaderboard Error: ", e);
+                    Toast.makeText(MainActivity.this, "리더보드를 표시할 수 없습니다.", Toast.LENGTH_SHORT).show();
+                });
     }
 
     private void signIn(){

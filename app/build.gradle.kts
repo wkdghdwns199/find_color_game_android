@@ -54,6 +54,7 @@ dependencies {
     // For example, add the dependencies for Firebase Authentication and Cloud Firestore
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
+    implementation ("com.google.android.gms:play-services-games:20.0.1")
     // Also declare the dependency for the Google Play services library and specify its version
     implementation("com.google.android.gms:play-services-auth:20.1.0")
 }

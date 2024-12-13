@@ -4,4 +4,5 @@
     <string name="failed_login">구글 로그인 실패</string>
     <string name="success_logout">로그아웃 되었습니다</string>
     <string name="status_login">이미 로그인 되어있습니다</string>
+    <string name="leaderboard_id"></string>
 </resources>
