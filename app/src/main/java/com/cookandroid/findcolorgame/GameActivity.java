@@ -16,7 +16,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
 
@@ -171,6 +171,28 @@ public class GameActivity extends AppCompatActivity {
     }
 
     private void showRetryDialog() {
+        if (user != null) {
+            String uid = user.getUid();
+            int userScore = currentStage;
+
+            Map<String, Object> userData = new HashMap<>();
+            userData.put("key",uid);
+            userData.put("score", userScore);
+            userData.put("name", user.getDisplayName());
+
+            DocumentReference totalRankingDocRef = db.collection("ranking").document("totalRanking");
+
+            Map<String, Object> entriesUpdate = new HashMap<>();
+            entriesUpdate.put(uid, userData); // 사용자 ID를 키로 하는 맵 생성
+
+            totalRankingDocRef.set(new HashMap<String, Object>() {{ // 빈 Map으로 시작
+                put("entries", entriesUpdate);
+            }}, SetOptions.merge()).addOnSuccessListener(aVoid -> {
+                Log.d("Firestore", "Ranking successfully written!");
+            }).addOnFailureListener(e -> {
+                Log.w("Firestore", "Error writing ranking", e);
+            });
+        }
         new AlertDialog.Builder(this)
                 .setTitle("게임 종료")
                 .setMessage("다시 하겠습니까?")
@@ -180,24 +202,6 @@ public class GameActivity extends AppCompatActivity {
                     startGame();
                 })
                 .setNegativeButton("종료", (dialog, which) -> {
-                    if (user != null) {
-                        String uid = user.getUid();
-                        int userScore = 100; // 예시로 사용자의 점수를 100점이라 가정
-
-                        Map<String, Object> data = new HashMap<>();
-                        data.put("score", userScore);
-                        data.put("email", user.getEmail());
-                        data.put("name", user.getDisplayName());
-
-                        db.collection("users").document(uid)
-                                .set(data, SetOptions.merge()) // merge() 사용 시 기존 데이터에 갱신
-                                .addOnSuccessListener(aVoid -> {
-                                    Log.d("Firestore", "Score successfully written!");
-                                })
-                                .addOnFailureListener(e -> {
-                                    Log.w("Firestore", "Error writing score", e);
-                                });
-                    }
                     Intent intent = new Intent(GameActivity.this, MainActivity.class);
                     startActivity(intent);
                     finish();
